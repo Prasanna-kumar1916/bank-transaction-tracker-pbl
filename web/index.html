@@ -32,7 +32,7 @@
     .tablewrap { overflow:auto; max-height:390px; border:1px solid var(--line); border-radius:9px; }
     table { width:100%; border-collapse:collapse; white-space:nowrap; font-size:13px; }
     th,td { padding:10px 11px; text-align:left; border-bottom:1px solid #e8edf4; }
-    th { position:sticky; top:0; background:#f2f5fa; color:#52627b; z-index:1; }
+    th { position:sticky; top:0; background:#f2f5fa; color:#627987; z-index:1; }
     .credit { color:var(--green); font-weight:700; } .debit { color:var(--red); font-weight:700; }
     .charts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:16px; }
     .chartpanel { min-height:260px; }
@@ -40,7 +40,20 @@
     .chartpanel p { margin:4px 0 0; color:var(--muted); font-size:12px; }
     .foot { color:var(--muted); font-size:12px; margin:16px 2px; }
     @media(max-width:850px) { .layout { grid-template-columns:1fr; } .cards { grid-template-columns:1fr; } .charts { grid-template-columns:1fr; } header { padding:22px 20px; } }
-  </style>
+  
+    :root { color-scheme: light; --ink:#172b3a; --muted:#627987; --line:#d6e5e2; --blue:#087f78; --green:#14836d; --red:#c45b63; --paper:#f1f7f5; --teal-dark:#075c59; --mint:#dff4ee; }
+    body { background:radial-gradient(ellipse at top right,#dcefea 0,transparent 38%),var(--paper); font:15px/1.5 "Segoe UI",Arial,sans-serif; }
+    header { background:linear-gradient(118deg,#103b42,#087f78 62%,#20a38f); padding-top:34px; padding-bottom:32px; box-shadow:0 12px 32px #164b4426; }
+    header h1 { font-size:32px; letter-spacing:-.7px; } header p { color:#d5f2eb; }
+    .notice { border-color:#e5c982; background:#fff9e9; color:#705a28; }
+    .card,.panel { background:#fff; border-color:var(--line); border-radius:16px; box-shadow:0 8px 24px #174e4410; }
+    .card { border-top:3px solid #80cabc; padding:18px 20px; } .card strong { font-size:26px; } .panel { padding:19px; }
+    label { color:#405c63; font-weight:650; } input,select { border-color:#cadbd7; border-radius:9px; background:#fbfdfc; padding:10px 11px; }
+    input:focus,select:focus { outline:3px solid #b9e6dc; border-color:var(--blue); }
+    button { background:var(--blue); border-radius:9px; padding:10px 15px; transition:background .18s,transform .18s; }
+    button:hover { background:var(--teal-dark); transform:translateY(-1px); } button.secondary { background:var(--mint); color:var(--teal-dark); } button.secondary:hover { background:#ccebe2; }
+    .tablewrap { border-color:var(--line); border-radius:10px; } th,td { border-bottom-color:#e5efec; } tbody tr:nth-child(even) { background:#f7fbfa; } tbody tr:hover { background:#edf7f4; } th { background:#e9f3f0; color:#405e63; }
+</style>
 </head>
 <body>
   <header>
@@ -203,6 +216,7 @@
   }
   window.addEventListener("resize",()=>drawCharts(activeAccount?allTransactions.filter(t=>t.accountId.toLowerCase()===activeAccount.toLowerCase()):allTransactions));
   loadTransactions().catch(showError);
-</script>
+</script><script>(()=>{const d=Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype,"fillStyle");const p={"#2457d6":"#087f78","#6b6fe8":"#20a38f","#168a68":"#14836d","#d14c55":"#c45b63","#f2a541":"#eabf6a","#a855f7":"#4e9ca0","#dbe3ef":"#d6e5e2","#52627b":"#627987","#40506a":"#405c63"};Object.defineProperty(CanvasRenderingContext2D.prototype,"fillStyle",{get(){return d.get.call(this)},set(v){d.set.call(this,p[v]||v)}})})();</script>
+
 </body>
 </html>
