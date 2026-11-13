@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bank Transaction Tracker</title>
+  <style>
+    :root { color-scheme: light; --ink:#17233b; --muted:#64748b; --line:#dbe3ef; --blue:#2457d6; --green:#168a68; --red:#d14c55; --paper:#f4f7fb; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.45 "Segoe UI",Arial,sans-serif; }
+    header { background:linear-gradient(120deg,#102447,#2457d6); color:white; padding:26px max(24px,calc((100vw - 1220px)/2)); }
+    header h1 { margin:0 0 6px; font-size:30px; }
+    header p { margin:0; color:#d8e5ff; }
+    .notice { margin:18px auto; max-width:1220px; padding:11px 14px; border:1px solid #f2d58a; border-radius:10px; background:#fff8e5; color:#6c5213; }
+    main { max-width:1220px; margin:0 auto 36px; padding:0 20px; }
+    .cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin:16px 0; }
+    .card,.panel { background:white; border:1px solid var(--line); border-radius:14px; box-shadow:0 5px 20px #1a36570a; }
+    .card { padding:17px 20px; }
+    .card span { display:block; color:var(--muted); font-size:13px; }
+    .card strong { display:block; margin-top:5px; font-size:25px; }
+    .layout { display:grid; grid-template-columns:340px 1fr; gap:16px; align-items:start; }
+    .panel { padding:18px; }
+    h2 { margin:0 0 14px; font-size:19px; }
+    label { display:block; margin:10px 0 5px; color:#41516a; font-size:13px; font-weight:600; }
+    input,select { width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:10px; background:#fff; color:var(--ink); font:inherit; }
+    button { border:0; border-radius:8px; padding:10px 14px; background:var(--blue); color:#fff; font:inherit; font-weight:650; cursor:pointer; }
+    button:hover { filter:brightness(.95); }
+    button.secondary { background:#eaf0fb; color:#1e3a68; }
+    .form-actions,.searchbar { display:flex; gap:8px; margin-top:14px; }
+    .searchbar input { flex:1; }
+    .message { min-height:22px; margin-top:9px; color:var(--green); font-size:13px; }
+    .tablewrap { overflow:auto; max-height:390px; border:1px solid var(--line); border-radius:9px; }
+    table { width:100%; border-collapse:collapse; white-space:nowrap; font-size:13px; }
+    th,td { padding:10px 11px; text-align:left; border-bottom:1px solid #e8edf4; }
+    th { position:sticky; top:0; background:#f2f5fa; color:#52627b; z-index:1; }
+    .credit { color:var(--green); font-weight:700; } .debit { color:var(--red); font-weight:700; }
+    .charts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:16px; }
+    .chartpanel { min-height:260px; }
+    canvas { width:100%; height:210px; display:block; }
+    .chartpanel p { margin:4px 0 0; color:var(--muted); font-size:12px; }
+    .foot { color:var(--muted); font-size:12px; margin:16px 2px; }
+    @media(max-width:850px) { .layout { grid-template-columns:1fr; } .cards { grid-template-columns:1fr; } .charts { grid-template-columns:1fr; } header { padding:22px 20px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Bank Transaction Tracker</h1>
+    <p>Search demo account activity, add a transaction, and explore the charts.</p>
+  </header>
+  <div class="notice">Demo project only. Use fictional account IDs and transactions. Do not enter real bank or customer information.</div>
+  <main>
+    <section class="cards">
+      <div class="card"><span>Transactions</span><strong id="count">0</strong></div>
+      <div class="card"><span>Total credits</span><strong id="credits">₹0.00</strong></div>
+      <div class="card"><span>Total debits</span><strong id="debits">₹0.00</strong></div>
+    </section>
+    <section class="layout">
+      <section class="panel">
+        <h2>Add transaction</h2>
+        <form id="transactionForm">
+          <label for="transactionId">Transaction ID</label><input id="transactionId" required placeholder="T1004">
+          <label for="accountId">Account ID</label><input id="accountId" required placeholder="ACC100">
+          <label for="dateTime">Transaction date and time</label><input id="dateTime" type="datetime-local" required>
+          <label for="type">Type</label><select id="type"><option>DEBIT</option><option>CREDIT</option></select>
+          <label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01" required>
+          <label for="mode">Mode</label><select id="mode"><option>UPI</option><option>CARD</option><option>CASH</option><option>NET_BANKING</option></select>
+          <label for="description">Description</label><input id="description" required placeholder="Demo payment">
+          <div class="form-actions"><button type="submit">Save transaction</button></div>
+          <div class="message" id="message" role="status"></div>
+        </form>
+      </section>
+      <section class="panel">
+        <h2>Transaction records</h2>
+        <div class="searchbar">
+          <input id="searchAccount" placeholder="Search by account ID">
+          <button id="searchButton" type="button">Search</button>
+          <button id="showAllButton" type="button" class="secondary">Show all</button>
+        </div>
+        <div class="tablewrap" style="margin-top:13px">
+          <table>
+            <thead><tr><th>ID</th><th>Account</th><th>Date and time</th><th>Type</th><th>Amount</th><th>Mode</th><th>Description</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+    <section class="charts">
+      <section class="panel chartpanel"><h2>Credits and debits by month</h2><canvas id="monthlyChart"></canvas></section>
+      <section class="panel chartpanel"><h2>Transactions by mode</h2><canvas id="modeChart"></canvas></section>
+      <section class="panel chartpanel"><h2>Daily transaction activity</h2><canvas id="dailyChart"></canvas></section>
+      <section class="panel chartpanel"><h2>Total amount by mode</h2><canvas id="amountChart"></canvas></section>
+    </section>
+    <p class="foot">Transactions older than 365 days are removed by the Java server. The Python dashboard script is also included in the project for the data-visualization subject.</p>
+  </main>
+<script>
+  const money = value => new Intl.NumberFormat("en-IN", {style:"currency",currency:"INR"}).format(value);
+  let allTransactions = [];
+  let activeAccount = "";
+  const message = document.getElementById("message");
+  document.getElementById("dateTime").value = new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+
+  async function loadTransactions(accountId = "") {
+    activeAccount = accountId;
+    const url = accountId ? `/api/transactions?accountId=${encodeURIComponent(accountId)}` : "/api/transactions";
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Could not load transaction records.");
+    const shown = await response.json();
+    const allResponse = accountId ? await fetch("/api/transactions") : null;
+    allTransactions = accountId ? await allResponse.json() : shown;
+    render(shown);
+  }
+
+  function render(rows) {
+    const credits = rows.filter(row => row.type === "CREDIT").reduce((sum,row) => sum + row.amount,0);
+    const debits = rows.filter(row => row.type === "DEBIT").reduce((sum,row) => sum + row.amount,0);
+    document.getElementById("count").textContent = rows.length;
+    document.getElementById("credits").textContent = money(credits);
+    document.getElementById("debits").textContent = money(debits);
+    document.getElementById("rows").innerHTML = rows.map(row => `<tr><td>${escapeHtml(row.transactionId)}</td><td>${escapeHtml(row.accountId)}</td><td>${escapeHtml(row.dateTime.replace("T"," "))}</td><td class="${row.type.toLowerCase()}">${escapeHtml(row.type)}</td><td>${money(row.amount)}</td><td>${escapeHtml(row.mode)}</td><td>${escapeHtml(row.description)}</td></tr>`).join("");
+    drawCharts(rows);
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+  }
+
+  document.getElementById("transactionForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    message.textContent = "Saving...";
+    const fields = ["transactionId","accountId","dateTime","type","amount","mode","description"];
+    const body = new URLSearchParams();
+    for (const id of fields) body.set(id, document.getElementById(id).value.trim());
+    if (body.get("dateTime").length === 16) body.set("dateTime", body.get("dateTime") + ":00");
+    try {
+      const response = await fetch("/api/transactions", {method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body});
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Could not save transaction.");
+      message.textContent = "Saved to the transaction file.";
+      document.getElementById("transactionId").value = "";
+      document.getElementById("amount").value = "";
+      document.getElementById("description").value = "";
+      await loadTransactions(activeAccount);
+    } catch (error) { message.textContent = error.message; message.style.color = "#b4232d"; }
+  });
+
+  document.getElementById("searchButton").addEventListener("click", () => loadTransactions(document.getElementById("searchAccount").value.trim()).catch(showError));
+  document.getElementById("showAllButton").addEventListener("click", () => { document.getElementById("searchAccount").value = ""; loadTransactions().catch(showError); });
+  document.getElementById("searchAccount").addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); document.getElementById("searchButton").click(); } });
+  function showError(error) { message.textContent = error.message; message.style.color = "#b4232d"; }
+
+  function canvasContext(id) {
+    const canvas = document.getElementById(id); const scale = window.devicePixelRatio || 1;
+    const width = canvas.clientWidth; const height = 210;
+    canvas.width = width * scale; canvas.height = height * scale;
+    const ctx = canvas.getContext("2d"); ctx.scale(scale, scale); ctx.clearRect(0,0,width,height);
+    return {ctx,width,height};
+  }
+
+  function drawCharts(rows) {
+    drawMonthly(rows); drawModes(rows); drawDaily(rows); drawModeAmounts(rows);
+  }
+  function drawMonthly(rows) {
+    const {ctx,width,height}=canvasContext("monthlyChart"); const totals={};
+    for(const r of rows){const month=r.dateTime.slice(0,7); totals[month]??={CREDIT:0,DEBIT:0}; totals[month][r.type]=(totals[month][r.type]||0)+r.amount;}
+    const keys=Object.keys(totals).sort(); const max=Math.max(1,...keys.flatMap(k=>[totals[k].CREDIT,totals[k].DEBIT]));
+    const left=42, bottom=height-28, usable=width-left-12, step=usable/Math.max(keys.length,1), bar=Math.min(24,step*.28);
+    ctx.font="11px Segoe UI"; ctx.strokeStyle="#dbe3ef"; ctx.beginPath(); ctx.moveTo(left,12); ctx.lineTo(left,bottom); ctx.lineTo(width-8,bottom); ctx.stroke();
+    keys.forEach((k,i)=>{const x=left+i*step+step*.2; const c=totals[k].CREDIT/max*(bottom-24), d=totals[k].DEBIT/max*(bottom-24); ctx.fillStyle="#168a68";ctx.fillRect(x,bottom-c,bar,c);ctx.fillStyle="#d14c55";ctx.fillRect(x+bar+4,bottom-d,bar,d);ctx.fillStyle="#52627b";ctx.fillText(k.slice(2),x,bottom+17);});
+    ctx.fillStyle="#168a68";ctx.fillRect(left,2,10,10);ctx.fillStyle="#40506a";ctx.fillText("Credit",left+14,11);ctx.fillStyle="#d14c55";ctx.fillRect(left+72,2,10,10);ctx.fillStyle="#40506a";ctx.fillText("Debit",left+86,11);
+  }
+  function drawModes(rows) {
+    const {ctx,width,height}=canvasContext("modeChart"); const counts={}; rows.forEach(r=>counts[r.mode]=(counts[r.mode]||0)+1);
+    const entries=Object.entries(counts); if(!entries.length)return; const colors=["#2457d6","#f2a541","#168a68","#a855f7","#d14c55"];
+    const cx=width*.34, cy=height*.52, radius=Math.min(70,height*.36); let angle=-Math.PI/2; const total=rows.length;
+    entries.forEach(([label,count],i)=>{const next=angle+count/total*Math.PI*2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,radius,angle,next);ctx.closePath();ctx.fillStyle=colors[i%colors.length];ctx.fill();angle=next;ctx.fillStyle="#40506a";ctx.font="12px Segoe UI";ctx.fillText(`${label} (${count})`,width*.62,40+i*25);});
+  }
+  function drawDaily(rows) {
+    const {ctx,width,height}=canvasContext("dailyChart"); const counts={}; rows.forEach(r=>{const day=r.dateTime.slice(0,10);counts[day]=(counts[day]||0)+1;});
+    const days=Object.keys(counts).sort(); if(!days.length)return; const max=Math.max(1,...Object.values(counts)), left=34,bottom=height-27, top=18,right=width-12;
+    ctx.strokeStyle="#dbe3ef";ctx.beginPath();ctx.moveTo(left,top);ctx.lineTo(left,bottom);ctx.lineTo(right,bottom);ctx.stroke();ctx.strokeStyle="#2457d6";ctx.lineWidth=2;ctx.beginPath();
+    days.forEach((day,i)=>{const x=left+(right-left)*(days.length===1?.5:i/(days.length-1));const y=bottom-(counts[day]/max)*(bottom-top);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);ctx.fillStyle="#2457d6";ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();ctx.fillStyle="#52627b";ctx.font="10px Segoe UI";ctx.fillText(day.slice(5),x-16,bottom+16);});ctx.stroke();
+  }
+  function drawModeAmounts(rows) {
+    const {ctx,width,height}=canvasContext("amountChart");const totals={};rows.forEach(r=>totals[r.mode]=(totals[r.mode]||0)+r.amount);
+    const entries=Object.entries(totals).sort((a,b)=>b[1]-a[1]); if(!entries.length)return;const max=Math.max(1,...entries.map(e=>e[1])), left=100, top=18, rowH=Math.min(34,(height-24)/entries.length), barW=width-left-12;
+    entries.forEach(([mode,total],i)=>{const y=top+i*rowH;ctx.fillStyle="#52627b";ctx.font="11px Segoe UI";ctx.fillText(mode.slice(0,13),4,y+15);ctx.fillStyle="#6b6fe8";ctx.fillRect(left,y,barW*total/max,18);ctx.fillStyle="#fff";if(barW*total/max>45){ctx.fillText(Math.round(total).toLocaleString("en-IN"),left+5,y+13);}});
+  }
+  window.addEventListener("resize",()=>drawCharts(activeAccount?allTransactions.filter(t=>t.accountId.toLowerCase()===activeAccount.toLowerCase()):allTransactions));
+  loadTransactions().catch(showError);
+</script>
+</body>
+</html>
