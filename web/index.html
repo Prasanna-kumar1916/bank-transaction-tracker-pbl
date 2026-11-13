@@ -60,7 +60,7 @@
     <h1>Bank Transaction Tracker</h1>
     <p>Search demo account activity, add a transaction, and explore the charts.</p>
   </header>
-  <div class="notice">Demo project only. Use fictional account IDs and transactions. Do not enter real bank or customer information.</div>
+  
   <main>
     <section class="cards">
       <div class="card"><span>Transactions</span><strong id="count">0</strong></div>
@@ -104,7 +104,7 @@
       <section class="panel chartpanel"><h2>Daily transaction activity</h2><canvas id="dailyChart"></canvas></section>
       <section class="panel chartpanel"><h2>Total amount by mode</h2><canvas id="amountChart"></canvas></section>
     </section>
-    <p class="foot">Download CSV saves a copy of the current website records to your browser's Downloads folder. Transactions older than 365 days are removed by the Java server. The Python dashboard script is also included for the data-visualization subject.</p>
+    <p class="foot">Download CSV saves a copy of the current website records to your browser's Downloads folder. Transactions older than 365 days are removed by the Java server. The Python dashboard script is also included for the data-visualization subject. Use fictional demo data only; never enter real bank or customer information.</p>
   </main>
 <script>
   const money = value => new Intl.NumberFormat("en-IN", {style:"currency",currency:"INR"}).format(value);
